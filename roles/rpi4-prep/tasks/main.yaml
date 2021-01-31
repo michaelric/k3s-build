@@ -1,0 +1,136 @@
+---
+- name: Set authorized key for user ubuntu copying it from current user
+  authorized_key:
+    user: ubuntu
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+- name: Enable remote apt full-upgrade
+  command: "sudo dpkg --configure -a"
+
+- name: Update repositories cache 
+  apt: 
+    update_cache: yes
+    force_apt_get: yes
+  register: apt_update
+  retries: 1
+  until: apt_update is success
+
+- name: Full upgrade of all packages and tidy up
+  apt: 
+    force_apt_get: yes
+    upgrade: full
+  register: apt_upgrade
+  retries: 1
+  until: apt_upgrade is success
+
+- name: Install required system packages
+  apt: 
+    name: 
+    - apt-transport-https
+    - ca-certificates
+    - dnsutils
+    - gnupg2
+    - libnss-mdns
+    - lvm2
+    - neofetch
+    - nfs-common
+    - python3
+    - python3-pip
+    - software-properties-common
+    - unattended-upgrades
+    install_recommends: false
+    update_cache: true
+  register: apt_install_packages
+  retries: 1
+  until: apt_install_packages is success
+
+- name: Install required for local name resolution
+  apt: 
+    name: 
+    - avahi-daemon 
+    - avahi-autoipd
+    install_recommends: false
+    update_cache: true
+  register: apt_install_mdns_packages
+  retries: 1
+  until: apt_install_mdns_packages is success
+
+- name: Install open-iscsi package required for openebs
+  apt:
+    name:
+    -  open-iscsi
+    install_recommends: false
+    update_cache: true
+  register: apt_install_iscsi_packages
+  retries: 1
+  until: apt_install_iscsi_packages is success
+
+- name: Enable service iscsi
+  service:
+    name: iscsi
+
+- name: Clean up apt
+  apt:
+    autoremove: true
+    force_apt_get: true
+
+- name: Copy unattended-upgrades configuration files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/apt/apt.conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+  - 10periodic
+  - 50unattended-upgrades
+
+#- name: Change ip4tables to legacy
+#  alternatives:
+#    path: /usr/sbin/iptables-legacy
+#    name: iptables
+
+#- name: Change ip6tables-legacy
+#  alternatives:
+#    path: /usr/sbin/ip6tables-legacy
+#    name: ip6tables
+
+# path: /boot/firmware/cmdline.txt
+- name: Add cgroup support
+  lineinfile:
+    path: /boot/firmware/nobtcmd.txt 
+    regexp: '^((?!.*\bcgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\b).*)$'
+    line: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory'
+    backrefs: true
+
+- name: Disable SWAP in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: Set timezone
+  timezone:
+    name: '{{ timezone }}'
+
+#- name: Add static names to etc/hosts template file (needs reboot to activate)
+#  copy:
+#    src: "{{ item }}"
+#    dest: "/etc/cloud/templates/{{ item }}"
+#  with_items:
+#  - hosts.debian.tmpl
+
+- name: Check if a reboot is needed
+  register: reboot_required_file
+  stat: path=/var/run/reboot-required get_md5=no
+
+- name: Reboot host and wait for it to restart
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: whoami
+  when: reboot_required_file.stat.exists

@@ -1,0 +1,12 @@
+# Ansible playbook to install k3s on all the cluster nodes 
+---
+    
+- hosts: rpi_to_build
+  gather_facts: yes
+  become: yes
+
+  vars_files:
+  - all.yml
+
+  roles:
+    - { role: rpi4-prep }

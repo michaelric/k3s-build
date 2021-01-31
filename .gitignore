@@ -1,0 +1,14 @@
+.env
+*.env
+secrets.yaml
+hosts.ini
+ca.crt
+ca.key
+*.crt
+*.key
+extensions.json
+*.pem
+.vscode
+hosts.ini
+*.zip
+*.iso

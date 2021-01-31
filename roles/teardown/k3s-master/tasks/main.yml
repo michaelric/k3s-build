@@ -1,0 +1,4 @@
+---
+
+- name: Teardown k3s master node
+  shell: "/usr/local/bin/k3s-uninstall.sh"

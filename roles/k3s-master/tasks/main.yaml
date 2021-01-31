@@ -1,0 +1,63 @@
+---
+- name: Populate service facts
+  service_facts:
+- debug:
+    msg: k3s installed!
+  when: "'k3s' in services"
+
+- name: Install k3s on master node
+  shell: "curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} INSTALL_K3S_EXEC=\"server --docker --tls-san k3s-master --no-deploy servicelb --no-deploy traefik --flannel-backend=host-gw \" sh -"  
+# INSTALL_K3S_VERSION={{ k3s_version }} K3S_KUBECONFIG_MODE=\"644\" INSTALL_K3S_EXEC=\" server --no-deploy servicelb --no-deploy traefik --flannel-backend host-gw  \" sh -"  
+
+# INSTALL_K3S_VERSION
+#  --node-label foo=bar
+# --tls-san value
+
+- name: Enable and check K3s service
+  systemd:
+    name: k3s
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+
+- name: Wait for node-token
+  wait_for:
+    path: /var/lib/rancher/k3s/server/node-token
+
+- name: Get token from master
+  shell: cat /var/lib/rancher/k3s/server/node-token
+  register: k3s_node_token
+
+- name: Create directory .kube
+  file:
+    path: /home/{{ ansible_user }}/.kube
+    state: directory
+    owner: "{{ ansible_user }}"
+
+- name: Copy config file to user home directory
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/{{ ansible_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+
+- name: Replace https://localhost:6443 by https://master-pi:6443
+  replace:
+    dest: /home/{{ ansible_user }}/.kube/config
+    regexp: "https://127.0.0.1:6443"
+    replace: 'https://{{ k3s_master_ip }}:6443'
+
+- name: Create kubeconfig with remote hostname
+  shell: "sed 's/127.0.0.1/{{ k3s_master_ip }}/' /etc/rancher/k3s/k3s.yaml > /etc/rancher/k3s/k3s-remote.yaml"
+  args:
+    warn: false
+  changed_when: false
+
+- name: Copy kubectl config to ansible host
+  fetch:
+    src: /etc/rancher/k3s/k3s-remote.yaml
+    flat: yes
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+
+#- name: Taint master node no schedule
+#  shell: "kubectl taint node {{ inventory_hostname }} node-role.kubernetes.io/master=effect:NoSchedule"

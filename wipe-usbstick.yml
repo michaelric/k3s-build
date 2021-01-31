@@ -1,0 +1,52 @@
+# https://github.com/rook/rook/blob/master/Documentation/ceph-teardown.md
+---
+
+- hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+  - group_vars/all.yml
+
+  vars_prompt:
+    - name: areyousure
+      prompt: Are you sure you want to purge the usb stick {{ usbdisk }}?
+      default: 'no'
+      private: no
+
+  tasks:
+    - name: exit playbook
+      fail:
+        msg: >
+          "Exiting playbook"
+      when: areyousure != 'yes'
+
+    - name: delete all files in the rook directory
+      file:
+        state: absent
+        path: "/var/lib/rook/"
+
+#    - name: expunge usb sticks
+#      shell: |
+#         umount /dev/sdb
+#         wipefs -a /dev/sdb
+
+    - name: expunge usb sticks
+      shell: |
+         sgdisk --zap-all "{{ usbdisk }}"
+#         dd if=/dev/zero of="{{ usbdisk }}" bs=1M count=100 oflag=direct,dsync
+
+    - name: teardown osds created using ceph-volume, teardown leaves some devices mapped that lock the disks.
+      shell: |
+        ls /dev/mapper/ceph-* | xargs -I% -- dmsetup remove %
+      ignore_errors: yes
+
+    - name: delete all files in the ceph directory
+      shell: |
+        ls /dev/mapper/ceph-* | xargs -I% -- rm %     
+      ignore_errors: yes
+
+    - name: delete all files in the ceph directory
+      shell: |
+        ls /dev/ceph-* | xargs -I% -- rm %
+      ignore_errors: yes

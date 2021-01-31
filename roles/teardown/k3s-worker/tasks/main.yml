@@ -1,0 +1,4 @@
+---
+
+- name: Teardown k3s worker nodes
+  shell: "/usr/local/bin/k3s-agent-uninstall.sh"

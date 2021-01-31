@@ -1,0 +1,21 @@
+# replace the ${varname} with your values.
+# Add/remove worker nodes as required.
+
+[k3s_master]
+k3s-master ansible_host=${MASTER_NODE_IP ADDRESS}
+ 
+[k3s_worker]
+k3s-node1 ansible_host=${WORKER_NODE1_IP ADDRESS}
+k3s-node2 ansible_host=${WORKER_NODE2_IP ADDRESS}
+k3s-node3 ansible_host=${WORKER_NODE3_IP ADDRESS}
+k3s-node4 ansible_host=${WORKER_NODE4_IP ADDRESS}
+
+[rpi_to_build]
+k3s-master ansible_host=${MASTER_NODE_IP ADDRESS}
+k3s-node1 ansible_host=${WORKER_NODE1_IP ADDRESS}
+k3s-node2 ansible_host=${WORKER_NODE2_IP ADDRESS}
+k3s-node3 ansible_host=${WORKER_NODE3_IP ADDRESS}
+k3s-node4 ansible_host=${WORKER_NODE4_IP ADDRESS}
+
+[rpi_to_build:vars]
+timezone=${TIME ZONE}

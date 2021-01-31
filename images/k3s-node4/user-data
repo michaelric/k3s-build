@@ -1,0 +1,58 @@
+#cloud-config
+hostname: k3s-node4
+manage_etc_hosts: true
+
+chpasswd:
+  expire: false
+  list:
+  - ubuntu:${password}
+
+# Enable password authentication with the SSH daemon
+ssh_pwauth: true
+
+## On first boot, use ssh-import-id to give the specific users SSH access to
+## the default user
+ssh_import_id:
+- ${user_id}
+
+ssh_authorized_keys:
+- ${ssh rsa key}
+
+users:
+- default
+- name: ubuntu
+  primary-group: users
+  shell: /bin/bash
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  groups: users
+
+ntp:
+  enabled: true
+  ntp_client: chrony
+
+# Update apt database and upgrade packages on first boot
+package_update: true
+package_upgrade: true
+
+# Install additional packages on first boot
+packages:
+- apt-transport-https
+- ca-certificates
+- dnsutils
+- gnupg2
+- libnss-mdns
+- lvm2
+- neofetch
+- nfs-common
+- python3
+- python3-pip
+- software-properties-common
+- unattended-upgrades
+- avahi-daemon
+- avahi-autoipd
+
+runcmd:
+- [ swapoff -a ]
+- [ sh, -xc, "echo $(date) ': Initial build complete!'" ]
+- reboot -f
+

@@ -1,0 +1,11 @@
+---
+ansible_user: ubuntu
+ssh_ansible_user: ubuntu
+remote_user: ubuntu
+
+systemd_dir: /etc/systemd/system
+k3s_master_ip: "{{ hostvars[groups['k3s_master'][0]]['ansible_host'] | default(groups['k3s_master'][0]) }}"
+k3s_version: v1.19.7+k3s1
+extra_server_args: ""
+extra_agent_args: ""
+usbdisk: /dev/sda
