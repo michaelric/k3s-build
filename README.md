@@ -2,7 +2,7 @@ k3s_build
 
 # Overview
 
-Infrastructure setup and k3s cluster build
+Infrastructure setup and k3s cluster build.  
 This reposistory builds and tears down my kubernetes k3s cluster (version v1.19.7+k3s1).
 
 ## Build Nodes 
