@@ -57,12 +57,17 @@ notes:
 -
 
 ### management machine
-- Install Ansible (2.2.9 or above)
+- Ansible (2.2.9 or above)
 ```
 sudo apt install python3
 sudo apt install python3-pip
 pip3 install --user ansible
 ansible --version
+```
+- Kubectl
+```
+sudo curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/usr/local/bin/kubectl"
+sudo chmod +x /usr/local/bin/kubectl
 ```
 
 ### HomeLab Environment
