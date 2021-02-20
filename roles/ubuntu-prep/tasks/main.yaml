@@ -1,0 +1,96 @@
+---
+- name: update apt cache and repos 
+  apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+- name: Upgrade all packages on servers
+  apt: upgrade=dist force_apt_get=yes
+
+- name: Check if a reboot is needed on all servers
+  register: reboot_required_file
+  stat: path=/var/run/reboot-required get_md5=no
+
+- name: Reboot the box if kernel updated
+  reboot:
+    msg: "Reboot initiated by Ansible for kernel updates"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime
+  when: reboot_required_file.stat.exists
+
+- name: install unattended-upgrades
+  apt:
+    pkg: unattended-upgrades
+    state: present
+
+- name: Copy unattended-upgrades configuration files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/apt/apt.conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+  - 10periodic
+  - 50unattended-upgrades
+
+- name: install libnss-mdns (local name resolution) 
+  apt:
+    pkg: libnss-mdns
+    state: present
+
+- name: install chrony
+  package:
+    name: chrony
+    state: present
+
+- name: install nfs-common
+  apt:
+    pkg: nfs-common
+    state: present
+
+- name: install docker.io
+  apt:
+    pkg: docker.io
+    state: present
+
+- name: Clean up apt
+  apt:
+    autoremove: true
+    force_apt_get: true
+
+- name: Disable SWAP this instance
+  shell: |
+    swapoff -a
+
+- name: Disable SWAP permenantly
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+#- name: Set timezone
+#  timezone:
+#    name: '{{ timezone }}'
+
+#- name: Add static names to etc/hosts template file (needs reboot to activate)
+#  copy:
+#    src: "{{ item }}"
+#    dest: "/etc/cloud/templates/{{ item }}"
+#  with_items:
+#  - hosts.debian.tmpl
+
+- name: Check if a reboot is needed
+  register: reboot_required_file
+  stat: path=/var/run/reboot-required get_md5=no
+
+- name: Reboot host and wait for it to restart
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: whoami
+  when: reboot_required_file.stat.exists

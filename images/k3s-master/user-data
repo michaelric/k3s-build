@@ -33,6 +33,9 @@ locale: en_US.UTF-8
 ntp:
   enabled: true
   ntp_client: chrony
+# sudo apt install chrony
+# sudo nano /etc/chrony/chrony.conf
+# sudo systemctl restart chrony.service
 
 # Update apt database and upgrade packages on first boot
 package_update: true
@@ -53,6 +56,7 @@ packages:
 - software-properties-common
 - unattended-upgrades
 # sudo apt install apt-transport-https ca-certificates dnsutils gnupg2 libnss-mdns lvm2 neofetch nfs-common python3 python3-pip software-properties-common unattended-upgrades
+# sudo apt install docker.io
 
 # blacklist sdhci module due conflict on Beelink U55
 write_files:

@@ -1,0 +1,8 @@
+# Ansible playbook to install k3s on all the cluster nodes 
+---
+    
+- hosts: k3s_master
+  gather_facts: yes
+  become: yes
+  roles:
+    - { role: ubuntu-prep }
