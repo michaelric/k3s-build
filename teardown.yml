@@ -6,6 +6,7 @@
   roles:
     - role: teardown/k3s-worker
     - role: teardown/deletefiles
+    - role: docker/dockerprune
 
 - hosts: k3s_master
   gather_facts: yes
@@ -13,3 +14,5 @@
   roles:
     - role: teardown/k3s-master
     - role: teardown/deletefiles
+    - role: docker/dockerprune
+

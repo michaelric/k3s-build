@@ -1,4 +1,10 @@
 ---
+- name: Check if k3s uninstall script installed
+  stat:
+    path: /usr/local/bin/k3s-uninstall.sh
+  register: stat_result
 
-- name: Teardown k3s master node
+# Only run uninstall script when uninstall.sh exists to prevent fatal error 
+- name: Teardown k3s master nodes
   shell: "/usr/local/bin/k3s-uninstall.sh"
+  when: stat_result.stat.exists

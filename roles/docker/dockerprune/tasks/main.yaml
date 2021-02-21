@@ -1,0 +1,9 @@
+---
+- name: Get the list of services
+  service_facts:
+
+- name: docker prune
+  shell: |
+    docker system prune --volumes -a -f
+  become: yes
+  when: "'docker.service' in services"
